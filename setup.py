@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='django-politico-civic-demography',
-    version='0.0.0-alpha',
+    name='politico-civic-demography',
+    version='0.1.0',
     description='',
-    url='https://github.com/The-Politico/django-politico-civic-demography',
+    url='https://github.com/The-Politico/politico-civic-demography',
     author='POLITICO interactive news',
     author_email='interactives@politico.com',
     license='MIT',
@@ -28,7 +28,11 @@ setup(
     install_requires=[
         'boto3',
         'census',
+        'django',
         'djangorestframework',
+        'dj-database-url',
+        'psycopg2',
+        'politico-civic-geography',
         'tqdm',
     ],
 
