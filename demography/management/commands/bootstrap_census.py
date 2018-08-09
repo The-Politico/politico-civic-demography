@@ -52,7 +52,22 @@ class Command(BaseCommand):
         else:
             return None
 
-    def write_estimate(self, table, variable, code, datum):
+    def write_district_estimate(self, table, variable, code, datum):
+        try:
+            state = Division.objects.get(code=datum['state'], level=self.STATE_LEVEL)
+            division = Division.objects.get(code=datum['congressional district'],
+                level=self.DISTRICT_LEVEL, parent=state)
+            CensusEstimate.objects.update_or_create(
+                division=division,
+                variable=variable,
+                defaults={
+                    'estimate': datum[code] or 0
+                }
+            )
+        except ObjectDoesNotExist:
+            print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
+
+    def write_county_estimate(self, table, variable, code, datum):
         """
         Creates new estimate from a census series.
 
@@ -79,9 +94,44 @@ class Command(BaseCommand):
         except ObjectDoesNotExist:
             print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
 
+    # def write_state_estimate(self, table, variable, code, datum):
+    #     try:
+    #         division = Division.objects.get(code='{}{}'.format(
+    #             datum['state'],
+    #         ), level=self.STATE_LEVEL)
+    #         CensusEstimate.objects.update_or_create(
+    #             division=division,
+    #             variable=variable,
+    #             defaults={
+    #                 'estimate': datum[code] or 0
+    #             }
+    #         )
+    #     except ObjectDoesNotExist:
+    #         print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
+
+    def get_district_estimates_by_state(
+        self, api, table, variable, estimate, state
+    ):
+
+        """
+        Calls API for all districts in a state and a given estimate.
+        """
+        state = Division.objects.get(level=self.STATE_LEVEL, code=state)
+        district_data = api.get(
+            ('NAME', estimate),
+            {
+                'for': 'congressional district:*',
+                'in': 'state:{}'.format(state.code)
+            },
+            year=int(table.year)
+        )
+        for datum in district_data:
+            self.write_district_estimate(table, variable, estimate, datum)
+
     def get_county_estimates_by_state(
         self, api, table, variable, estimate, state
     ):
+
         """
         Calls API for all counties in a state and a given estimate.
         """
@@ -95,7 +145,7 @@ class Command(BaseCommand):
             year=int(table.year)
         )
         for datum in county_data:
-            self.write_estimate(table, variable, estimate, datum)
+            self.write_county_estimate(table, variable, estimate, datum)
 
     def fetch_census_data(self, states):
         """
@@ -116,6 +166,13 @@ class Command(BaseCommand):
                 ))
                 for state in tqdm(states):
                     self.get_county_estimates_by_state(
+                        api=api,
+                        table=table,
+                        variable=variable,
+                        estimate=estimate,
+                        state=state,
+                    )
+                    self.get_district_estimates_by_state(
                         api=api,
                         table=table,
                         variable=variable,
@@ -201,6 +258,41 @@ class Command(BaseCommand):
                         ContentType='application/json'
                     )
 
+    def export_by_district(self, state):
+        """
+        Creates data structure designed for an export in this format:
+        .../{state_fips}/{district_fips}.json
+        """
+        data = {}
+        for division in tqdm(
+            Division.objects.filter(level=self.DISTRICT_LEVEL, parent=state)
+        ):
+            fips = division.code
+            aggregated_labels = []  # Keep track of already agg'ed variables
+            for estimate in division.census_estimates.all():
+                # not currently using these variables, but good to have
+                series = estimate.variable.table.series
+                year = estimate.variable.table.year
+
+                table = estimate.variable.table.code
+                label = estimate.variable.label.label
+                table_label = '{}{}'.format(table, label)
+                code = estimate.variable.code
+                if table not in data:
+                    data[table] = {}
+                if label is not None:
+                    if table_label not in aggregated_labels:
+                        aggregated_labels.append(table_label)
+                        data[table][label] \
+                            = estimate.estimate
+                else:
+                    data[table][code] \
+                        = estimate.estimate
+        print (data)
+        return data
+
+
+
     def export_by_state(self, states):
         bucket = get_bucket()
         for fips in states:
@@ -208,6 +300,7 @@ class Command(BaseCommand):
             print('>> Exporting: {}'.format(state.code))
             state_data = self.aggregate_counties(state)
             self.export_state_files(bucket, state, state_data)
+            self.export_by_district(state)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -235,6 +328,8 @@ class Command(BaseCommand):
             name=DivisionLevel.STATE)
         self.COUNTY_LEVEL = DivisionLevel.objects.get(
             name=DivisionLevel.COUNTY)
+        self.DISTRICT_LEVEL = DivisionLevel.objects.get(
+            name=DivisionLevel.DISTRICT)
         self.production = options['production']
         states = options['states']
         if options['export'] is False:
