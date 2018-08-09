@@ -284,14 +284,12 @@ class Command(BaseCommand):
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
                         data[table][label] \
-                            = estimate.estimate
+                            = self.aggregate_variable(estimate, fips)
                 else:
                     data[table][code] \
                         = estimate.estimate
-        print (data)
+        # print (data)
         return data
-
-
 
     def export_by_state(self, states):
         bucket = get_bucket()
