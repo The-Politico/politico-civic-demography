@@ -315,6 +315,41 @@ class Command(BaseCommand):
         # print (data)
         return data
 
+    # TODO, this function name is confusing b/c of export_by_state + and its county aggregation
+    # writes census variables at the state level
+    def export_state(self, state):
+        """
+        Creates data structure designed for an export in this format:
+        .../{state_fips}.json
+        """
+        data = {}
+        for division in tqdm(
+            Division.objects.filter(level=self.DISTRICT_LEVEL, parent=state)
+        ):
+            fips = division.code
+            aggregated_labels = []  # Keep track of already agg'ed variables
+            for estimate in division.census_estimates.all():
+                # not currently using these variables, but good to have
+                series = estimate.variable.table.series
+                year = estimate.variable.table.year
+
+                table = estimate.variable.table.code
+                label = estimate.variable.label.label
+                table_label = '{}{}'.format(table, label)
+                code = estimate.variable.code
+                if table not in data:
+                    data[table] = {}
+                if label is not None:
+                    if table_label not in aggregated_labels:
+                        aggregated_labels.append(table_label)
+                        data[table][label] \
+                            = self.aggregate_variable(estimate, fips)
+                else:
+                    data[table][code] \
+                        = estimate.estimate
+        # print (data)
+        return data
+
     def export_by_state(self, states):
         bucket = get_bucket()
         for fips in states:
@@ -323,6 +358,7 @@ class Command(BaseCommand):
             state_data = self.aggregate_counties(state)
             self.export_state_files(bucket, state, state_data)
             self.export_by_district(state)
+            self.export_state(state)
 
     def add_arguments(self, parser):
         parser.add_argument(
