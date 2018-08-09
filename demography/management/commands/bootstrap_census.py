@@ -94,20 +94,18 @@ class Command(BaseCommand):
         except ObjectDoesNotExist:
             print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
 
-    # def write_state_estimate(self, table, variable, code, datum):
-    #     try:
-    #         division = Division.objects.get(code='{}{}'.format(
-    #             datum['state'],
-    #         ), level=self.STATE_LEVEL)
-    #         CensusEstimate.objects.update_or_create(
-    #             division=division,
-    #             variable=variable,
-    #             defaults={
-    #                 'estimate': datum[code] or 0
-    #             }
-    #         )
-    #     except ObjectDoesNotExist:
-    #         print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
+    def write_state_estimate(self, table, variable, code, datum):
+        try:
+            division = Division.objects.get(code=datum['state'], level=self.STATE_LEVEL)
+            CensusEstimate.objects.update_or_create(
+                division=division,
+                variable=variable,
+                defaults={
+                    'estimate': datum[code] or 0
+                }
+            )
+        except ObjectDoesNotExist:
+            print('ERROR: {}, {}'.format(datum['NAME'], datum['state']))
 
     def get_district_estimates_by_state(
         self, api, table, variable, estimate, state
@@ -147,6 +145,25 @@ class Command(BaseCommand):
         for datum in county_data:
             self.write_county_estimate(table, variable, estimate, datum)
 
+    def get_state_estimates_by_state(
+        self, api, table, variable, estimate, state
+    ):
+
+        """
+        Calls API for a state and a given estimate.
+        """
+        state = Division.objects.get(level=self.STATE_LEVEL, code=state)
+        state_data = api.get(
+            ('NAME', estimate),
+            {
+                'for': 'state:{}'.format(state.code),
+                # 'for': 'state:*' # this returns all states,
+            },
+            year=int(table.year)
+        )
+        for datum in state_data:
+            self.write_state_estimate(table, variable, estimate, datum)
+
     def fetch_census_data(self, states):
         """
         Fetch census estimates from table.
@@ -165,6 +182,13 @@ class Command(BaseCommand):
                     estimate
                 ))
                 for state in tqdm(states):
+                    self.get_state_estimates_by_state(
+                        api=api,
+                        table=table,
+                        variable=variable,
+                        estimate=estimate,
+                        state=state,
+                    )
                     self.get_county_estimates_by_state(
                         api=api,
                         table=table,
