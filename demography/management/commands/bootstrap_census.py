@@ -302,7 +302,7 @@ class Command(BaseCommand):
                 else:
                     data[series][year][table][fips][code] \
                         = [estimate.estimate]
-        print(data)
+        # print(data)
 
     def aggregate_counties(self, parent):
         """
@@ -376,23 +376,27 @@ class Command(BaseCommand):
             id = division.id
             aggregated_labels = []  # Keep track of already agg'ed variables
             for estimate in division.census_estimates.all():
-                # not currently using these variables, but good to have
                 series = estimate.variable.table.series
                 year = estimate.variable.table.year
-
                 table = estimate.variable.table.code
                 label = estimate.variable.label.label
                 table_label = '{}{}'.format(table, label)
                 code = estimate.variable.code
-                if table not in data:
-                    data[table] = {}
+                if series not in data:
+                    data[series] = {}
+                if year not in data[series]:
+                    data[series][year] = {}
+                if table not in data[series][year]:
+                    data[series][year][table] = {}
+                if fips not in data[series][year][table]:
+                    data[series][year][table][fips] = {}
                 if label is not None:
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
-                        data[table][label] \
+                        data[series][year][table][fips][label] \
                             = self.aggregate_variable(estimate, id)
                 else:
-                    data[table][code] \
+                    data[series][year][table][division.code][code] \
                         = estimate.estimate
             # print (data)
         return data
@@ -412,23 +416,27 @@ class Command(BaseCommand):
             id = division.id
             aggregated_labels = []  # Keep track of already agg'ed variables
             for estimate in division.census_estimates.all():
-                # not currently using these variables, but good to have
                 series = estimate.variable.table.series
                 year = estimate.variable.table.year
-
                 table = estimate.variable.table.code
                 label = estimate.variable.label.label
                 table_label = '{}{}'.format(table, label)
                 code = estimate.variable.code
-                if table not in data:
-                    data[table] = {}
+                if series not in data:
+                    data[series] = {}
+                if year not in data[series]:
+                    data[series][year] = {}
+                if table not in data[series][year]:
+                    data[series][year][table] = {}
+                if fips not in data[series][year][table]:
+                    data[series][year][table][fips] = {}
                 if label is not None:
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
-                        data[table][label] \
+                        data[series][year][table][fips][label] \
                             = self.aggregate_variable(estimate, id)
                 else:
-                    data[table][code] \
+                    data[series][year][table][division.code][code] \
                         = estimate.estimate
         # print (data)
         return data
