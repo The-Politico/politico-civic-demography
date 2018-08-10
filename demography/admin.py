@@ -58,7 +58,7 @@ class CensusLabelAdmin(admin.ModelAdmin):
 
 @admin.register(CensusEstimate)
 class CensusEstimateAdmin(admin.ModelAdmin):
-    list_filter = ('variable__table__code',)
+    list_filter = ('variable__table__code', 'division__level__name')
     list_display = (
         'variable_code',
         'table_code',

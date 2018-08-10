@@ -312,7 +312,7 @@ class Command(BaseCommand):
                 else:
                     data[table][code] \
                         = estimate.estimate
-        # print (data)
+        print (data)
         return data
 
     # TODO, this function name is confusing b/c of export_by_state + and its county aggregation
