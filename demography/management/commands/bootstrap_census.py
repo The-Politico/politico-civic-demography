@@ -246,7 +246,46 @@ class Command(BaseCommand):
                 data[series][year][table] = {}
             if fips not in data[series][year][table]:
                 data[series][year][table][fips] = {}
-            # I understand up to here
+            if label is not None:
+                if table_label not in aggregated_labels:
+                    aggregated_labels.append(table_label)
+                    data[series][year][table][fips][label] \
+                        = [
+                            self.aggregate_variable(estimate, division.id)
+                            for division in states
+                            if len(CensusEstimate.objects.filter(variable=estimate.variable, division=division.id)) > 0
+                        ]
+            else:
+                if code in data[series][year][table][fips]:
+                    data[series][year][table][fips][code].append(
+                        estimate.estimate)
+                else:
+                    data[series][year][table][fips][code] \
+                        = [estimate.estimate]
+        # print(data)
+
+    def aggregate_district_estimates_by_nation(self):
+        data = {}
+        fips = '00'
+        aggregated_labels = []
+        states = Division.objects.filter(level=self.DISTRICT_LEVEL)
+        estimates = CensusEstimate.objects.filter(
+            division__level=self.DISTRICT_LEVEL)
+        for estimate in estimates:
+            series = estimate.variable.table.series
+            year = estimate.variable.table.year
+            table = estimate.variable.table.code
+            label = estimate.variable.label.label
+            table_label = '{}{}'.format(table, label)
+            code = estimate.variable.code
+            if series not in data:
+                data[series] = {}
+            if year not in data[series]:
+                data[series][year] = {}
+            if table not in data[series][year]:
+                data[series][year][table] = {}
+            if fips not in data[series][year][table]:
+                data[series][year][table][fips] = {}
             if label is not None:
                 if table_label not in aggregated_labels:
                     aggregated_labels.append(table_label)
@@ -264,10 +303,6 @@ class Command(BaseCommand):
                     data[series][year][table][fips][code] \
                         = [estimate.estimate]
         print(data)
-
-    def aggregate_district_estimates_by_nation(self):
-        CensusEstimate.objects.filter(division__level=self.DISTRICT_LEVEL)
-        pass
 
     def aggregate_counties(self, parent):
         """
@@ -437,6 +472,7 @@ class Command(BaseCommand):
         self.DISTRICT_LEVEL = DivisionLevel.objects.get(
             name=DivisionLevel.DISTRICT)
         self.aggregate_state_estimates_by_nation()
+        self.aggregate_district_estimates_by_nation()
         self.production = options['production']
         states = options['states']
         if options['export'] is False:
