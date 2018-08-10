@@ -2,14 +2,15 @@ import json
 import os
 import statistics
 
+from tqdm import tqdm
+
 import boto3
 from census import Census
 from demography.conf import settings
-from demography.models import CensusEstimate, CensusTable
+from demography.models import CensusEstimate, CensusTable, CensusVariable
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from geography.models import Division, DivisionLevel
-from tqdm import tqdm
 
 census = Census(settings.CENSUS_API_KEY)
 
@@ -157,7 +158,6 @@ class Command(BaseCommand):
             ('NAME', estimate),
             {
                 'for': 'state:{}'.format(state.code),
-                # 'for': 'state:*' # this returns all states,
             },
             year=int(table.year)
         )
@@ -205,12 +205,12 @@ class Command(BaseCommand):
                     )
 
     @staticmethod
-    def aggregate_variable(estimate, code):
+    def aggregate_variable(estimate, id):
         """
         Aggregate census table variables by a custom label.
         """
         estimates = [
-            variable.estimates.get(division__code=code).estimate
+            variable.estimates.get(division__id=id).estimate
             for variable in estimate.variable.label.variables.all()
         ]
         method = estimate.variable.label.aggregation
@@ -224,6 +224,50 @@ class Command(BaseCommand):
             aggregate = None
         return aggregate
 
+    def aggregate_state_estimates_by_nation(self):
+        data = {}
+        fips = '00'
+        aggregated_labels = []
+        states = Division.objects.filter(level=self.STATE_LEVEL)
+        estimates = CensusEstimate.objects.filter(
+            division__level=self.STATE_LEVEL)
+        for estimate in estimates:
+            series = estimate.variable.table.series
+            year = estimate.variable.table.year
+            table = estimate.variable.table.code
+            label = estimate.variable.label.label
+            table_label = '{}{}'.format(table, label)
+            code = estimate.variable.code
+            if series not in data:
+                data[series] = {}
+            if year not in data[series]:
+                data[series][year] = {}
+            if table not in data[series][year]:
+                data[series][year][table] = {}
+            if fips not in data[series][year][table]:
+                data[series][year][table][fips] = {}
+            # I understand up to here
+            if label is not None:
+                if table_label not in aggregated_labels:
+                    aggregated_labels.append(table_label)
+                    data[series][year][table][fips][label] \
+                        = [
+                            self.aggregate_variable(estimate, division.id)
+                            for division in states
+                        ]
+            else:
+                if code in data[series][year][table][fips]:
+                    data[series][year][table][fips][code].append(
+                        estimate.estimate)
+                else:
+                    data[series][year][table][fips][code] \
+                        = [estimate.estimate]
+        print(data)
+
+    def aggregate_district_estimates_by_nation(self):
+        CensusEstimate.objects.filter(division__level=self.DISTRICT_LEVEL)
+        pass
+
     def aggregate_counties(self, parent):
         """
         Aggregates county-level estimates within a given state.
@@ -236,6 +280,7 @@ class Command(BaseCommand):
             Division.objects.filter(level=self.COUNTY_LEVEL, parent=parent)
         ):
             fips = division.code
+            id = division.id
             aggregated_labels = []  # Keep track of already agg'ed variables
             for estimate in division.census_estimates.all():
                 series = estimate.variable.table.series
@@ -256,7 +301,7 @@ class Command(BaseCommand):
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
                         data[series][year][table][fips][label] \
-                            = self.aggregate_variable(estimate, fips)
+                            = self.aggregate_variable(estimate, id)
                 else:
                     data[series][year][table][division.code][code] \
                         = estimate.estimate
@@ -292,6 +337,7 @@ class Command(BaseCommand):
             Division.objects.filter(level=self.DISTRICT_LEVEL, parent=state)
         ):
             fips = division.code
+            id = division.id
             aggregated_labels = []  # Keep track of already agg'ed variables
             for estimate in division.census_estimates.all():
                 # not currently using these variables, but good to have
@@ -308,11 +354,11 @@ class Command(BaseCommand):
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
                         data[table][label] \
-                            = self.aggregate_variable(estimate, fips)
+                            = self.aggregate_variable(estimate, id)
                 else:
                     data[table][code] \
                         = estimate.estimate
-        print (data)
+            print (data)
         return data
 
     # TODO, this function name is confusing b/c of export_by_state + and its county aggregation
@@ -327,6 +373,7 @@ class Command(BaseCommand):
             Division.objects.filter(level=self.DISTRICT_LEVEL, parent=state)
         ):
             fips = division.code
+            id = division.id
             aggregated_labels = []  # Keep track of already agg'ed variables
             for estimate in division.census_estimates.all():
                 # not currently using these variables, but good to have
@@ -343,7 +390,7 @@ class Command(BaseCommand):
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
                         data[table][label] \
-                            = self.aggregate_variable(estimate, fips)
+                            = self.aggregate_variable(estimate, id)
                 else:
                     data[table][code] \
                         = estimate.estimate
