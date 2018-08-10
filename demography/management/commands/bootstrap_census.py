@@ -254,6 +254,7 @@ class Command(BaseCommand):
                         = [
                             self.aggregate_variable(estimate, division.id)
                             for division in states
+                            if len(CensusEstimate.objects.filter(variable=estimate.variable, division=division.id)) > 0
                         ]
             else:
                 if code in data[series][year][table][fips]:
@@ -358,7 +359,7 @@ class Command(BaseCommand):
                 else:
                     data[table][code] \
                         = estimate.estimate
-            print (data)
+            # print (data)
         return data
 
     # TODO, this function name is confusing b/c of export_by_state + and its county aggregation
@@ -435,6 +436,7 @@ class Command(BaseCommand):
             name=DivisionLevel.COUNTY)
         self.DISTRICT_LEVEL = DivisionLevel.objects.get(
             name=DivisionLevel.DISTRICT)
+        self.aggregate_state_estimates_by_nation()
         self.production = options['production']
         states = options['states']
         if options['export'] is False:
