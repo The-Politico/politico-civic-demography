@@ -70,3 +70,48 @@ Move into the example directory, install dependencies and run the development se
   $ cd example
   $ pipenv run python manage.py migrate
   ```
+
+### Baking Data
+
+This app will bake multi-level census data files to the s3 bucket configured in your settings. The files will bake in the following structure:
+
+```javascript
+{ DEMOGRAPHY_AWS_S3_UPLOAD_ROOT }
+  ├── { series } // each census series (e.g. acs5) has its own directory
+  │ ├── { year } // each series has a directory for each year
+  │ │ ├── { table } // each year has a directory for each table by table code
+  │ │ │ ├── districts.json  // national-level data broken up by districts
+  │ │ │ ├── states.json  // national-level data broken up by states by district
+  │ │ │ ├── { state_fips } // each table has a directory for each state by FIPS code
+  │ │ │ │   ├── districts.json // state-level data broken up district
+  │ │ │ │   └── counties.json  // state-level data broken up county
+  │ │ │ └── ...
+  │ │ └── ...
+  │ └── ...
+  └── ...
+```
+
+*To Come...*
+##### National Districts File
+```python
+# upload_root/series/year/table/districts.json
+
+```
+
+##### National States File
+```python
+# upload_root/series/year/table/states.json
+
+```
+
+##### State Districts File
+```python
+# upload_root/series/year/table/state/districts.json
+
+```
+
+##### State County File
+```python
+# upload_root/series/year/table/state/counties.json
+
+```
