@@ -28,7 +28,7 @@ Settings.AWS_S3_BUCKET = getattr(
 Settings.AWS_S3_UPLOAD_ROOT = getattr(
     project_settings,
     'DEMOGRAPHY_AWS_S3_UPLOAD_ROOT',
-    'elections')
+    'election-results/data/us-census')
 
 Settings.AWS_ACL = getattr(
     project_settings, 'DEMOGRAPHY_AWS_ACL', 'public-read')

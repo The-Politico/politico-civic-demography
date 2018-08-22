@@ -10,12 +10,12 @@ class GetDistrict(object):
         """
         state = Division.objects.get(level=self.STATE_LEVEL, code=state)
         district_data = api.get(
-            ('NAME', estimate),
+            ("NAME", estimate),
             {
-                'for': 'congressional district:*',
-                'in': 'state:{}'.format(state.code)
+                "for": "congressional district:*",
+                "in": "state:{}".format(state.code),
             },
-            year=int(table.year)
+            year=int(table.year),
         )
         for datum in district_data:
             self.write_district_estimate(table, variable, estimate, datum)

@@ -23,7 +23,7 @@ class AggregateState(object):
                 year = estimate.variable.table.year
                 table = estimate.variable.table.code
                 label = estimate.variable.label.label
-                table_label = '{}{}'.format(table, label)
+                table_label = "{}{}".format(table, label)
                 code = estimate.variable.code
                 if series not in data:
                     data[series] = {}
@@ -36,12 +36,13 @@ class AggregateState(object):
                 if label is not None:
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
-                        data[series][year][table][fips][label] \
-                            = self.aggregate_variable(estimate, id)
+                        data[series][year][table][fips][
+                            label
+                        ] = self.aggregate_variable(estimate, id)
                 else:
-                    data[series][year][table][division.code][code] \
-                        = estimate.estimate
-        # print(data)
+                    data[series][year][table][division.code][
+                        code
+                    ] = estimate.estimate
         return data
 
     def aggregate_state_estimates_by_district(self, state):
@@ -64,7 +65,7 @@ class AggregateState(object):
                 year = estimate.variable.table.year
                 table = estimate.variable.table.code
                 label = estimate.variable.label.label
-                table_label = '{}{}'.format(table, label)
+                table_label = "{}{}".format(table, label)
                 code = estimate.variable.code
                 if series not in data:
                     data[series] = {}
@@ -77,9 +78,11 @@ class AggregateState(object):
                 if label is not None:
                     if table_label not in aggregated_labels:
                         aggregated_labels.append(table_label)
-                        data[series][year][table][fips][label] \
-                            = self.aggregate_variable(estimate, id)
+                        data[series][year][table][fips][
+                            label
+                        ] = self.aggregate_variable(estimate, id)
                 else:
-                    data[series][year][table][division.code][code] \
-                        = estimate.estimate
+                    data[series][year][table][division.code][
+                        code
+                    ] = estimate.estimate
         return data

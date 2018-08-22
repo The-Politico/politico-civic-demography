@@ -6,16 +6,15 @@ from .bootstrap.fetch import Fetcher
 from .bootstrap.write import Writer
 
 
-class Command(
-    ArgumentsMethods,
-    Attributes,
-    Fetcher,
-    Writer,
-    BaseCommand
-):
+class Command(ArgumentsMethods, Attributes, Fetcher, Writer, BaseCommand):
     def handle(self, *args, **options):
         self.set_attributes()
-        
-        states = options['states']
-        self.fetch_census_data(states)
+
+        states = options["states"]
+
+        if "00" in states:
+            self.fetch_nation_data()
+        else:
+            self.fetch_state_data(states)
+
         print("Done.")

@@ -10,11 +10,9 @@ class GetState(object):
         """
         state = Division.objects.get(level=self.STATE_LEVEL, code=state)
         state_data = api.get(
-            ('NAME', estimate),
-            {
-                'for': 'state:{}'.format(state.code),
-            },
-            year=int(table.year)
+            ("NAME", estimate),
+            {"for": "state:{}".format(state.code)},
+            year=int(table.year),
         )
         for datum in state_data:
             self.write_state_estimate(table, variable, estimate, datum)

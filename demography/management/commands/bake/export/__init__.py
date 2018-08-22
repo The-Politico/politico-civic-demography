@@ -1,7 +1,7 @@
-from ._data import ExportData
+from ._aws import UploadData
 from ._nation import ExportNation
 from ._state import ExportState
 
 
-class Exporter(ExportData, ExportState, ExportNation):
+class Exporter(UploadData, ExportState, ExportNation):
     pass
