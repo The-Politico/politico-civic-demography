@@ -22,8 +22,12 @@ class AggregateState(object):
                 series = estimate.variable.table.series
                 year = estimate.variable.table.year
                 table = estimate.variable.table.code
-                label = estimate.variable.label.label
-                table_label = "{}{}".format(table, label)
+
+                label = None
+                if estimate.variable.label:
+                    label = estimate.variable.label.label
+                    table_label = "{}{}".format(table, label)
+
                 code = estimate.variable.code
                 if series not in data:
                     data[series] = {}
@@ -64,8 +68,12 @@ class AggregateState(object):
                 series = estimate.variable.table.series
                 year = estimate.variable.table.year
                 table = estimate.variable.table.code
-                label = estimate.variable.label.label
-                table_label = "{}{}".format(table, label)
+
+                label = None
+                if estimate.variable.label:
+                    label = estimate.variable.label.label
+                    table_label = "{}{}".format(table, label)
+
                 code = estimate.variable.code
                 if series not in data:
                     data[series] = {}
