@@ -51,14 +51,9 @@ class AggregateNation(object):
                                 label
                             ] = self.aggregate_variable(estimate, state.id)
                 else:
-                    if code in data[series][year][table][state.code]:
-                        data[series][year][table][code].append(
-                            estimate.estimate
-                        )
-                    else:
-                        data[series][year][table][state.code][code] = [
-                            estimate.estimate
-                        ]
+                    data[series][year][table][state.code][
+                        code
+                    ] = estimate.estimate
 
         return data
 
@@ -122,17 +117,7 @@ class AggregateNation(object):
                                     estimate, district.id
                                 )
                     else:
-                        if (
+                        data[series][year][table][state.code][district.code][
                             code
-                            in data[series][year][table][state.code][
-                                district.code
-                            ]
-                        ):
-                            data[series][year][table][code].append(
-                                estimate.estimate
-                            )
-                        else:
-                            data[series][year][table][state.code][
-                                district.code
-                            ][code] = [estimate.estimate]
+                        ] = estimate.estimate
         return data

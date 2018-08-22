@@ -10,8 +10,8 @@ class ExportNation(object):
         self.upload_division("nation", "states", data_by_states)
         self.upload_division("nation", "districts", data_by_district)
 
-        states = [
-            state.code
-            for state in Division.objects.filter(level=self.STATE_LEVEL)
-        ]
-        self.export_states(states)
+        # states = [
+        #     state.code
+        #     for state in Division.objects.filter(level=self.STATE_LEVEL)
+        # ]
+        # self.export_states(states)
