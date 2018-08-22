@@ -91,7 +91,7 @@ This app will bake multi-level census data files to the s3 bucket configured in 
   └── ...
 ```
 
-The data structure will differ depending on the type of file and the setup of your census tables in the admin. Here are four samples for a data table of median age with a total code of `001E`. In our sample admin we have the code inputted twice: once with a label of `total` and once with no label.
+The data structure will differ depending on the type of file and the setup of your census tables in the admin. Here are four samples for a data table of "median age" with a "total" code of `001E`. In our sample admin we have the code inputted twice: once with a label of `total` and once with no label.
 
 ##### National Districts File
 ```python
