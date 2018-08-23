@@ -70,3 +70,124 @@ Move into the example directory, install dependencies and run the development se
   $ cd example
   $ pipenv run python manage.py migrate
   ```
+
+### Baking Data
+
+This app will bake multi-level census data files to the s3 bucket configured in your settings. The files will bake in the following structure:
+
+```javascript
+{ DEMOGRAPHY_AWS_S3_UPLOAD_ROOT }
+  ├── { series } // each census series (e.g. acs5) has its own directory
+  │ ├── { year } // each series has a directory for each year
+  │ │ ├── { table } // each year has a directory for each table by table code
+  │ │ │ ├── districts.json  // national-level data broken up by districts
+  │ │ │ ├── states.json  // national-level data broken up by states by district
+  │ │ │ ├── { state_fips } // each table has a directory for each state by FIPS code
+  │ │ │ │   ├── districts.json // state-level data broken up district
+  │ │ │ │   └── counties.json  // state-level data broken up county
+  │ │ │ └── ...
+  │ │ └── ...
+  │ └── ...
+  └── ...
+```
+
+The data structure will differ depending on the type of file and the setup of your census tables in the admin. Here are four samples for a data table of "median age" with a "total" code of `001E`. In our sample admin we have the code inputted twice: once with a label of `total` and once with no label.
+
+##### National Districts File
+```python
+# upload_root/series/year/table/districts.json
+{
+  "10": { # state FIPS code
+    "00": { # district number
+      "001E": 39.6, # census variable without a label
+      "total": 39.6, # census variable with an aggregate variable
+    }
+  },
+  "11": {
+    "98": {
+      "001E": 33.8,
+      "total": 33.8,
+    }
+  },
+  "12": {
+    "10": {
+      "001E": 35,
+      "total": 35,
+    },
+    "11": {
+      "001E": 55,
+      "total": 55,
+    },
+    "12": {
+      "001E": 46.3,
+      "total": 46.3,
+    },
+    ... # more districts here
+  },
+  ... # more states here
+}
+```
+
+##### National States File
+```python
+# upload_root/series/year/table/states.json
+{
+  "10": {
+    "001E": 39.6,
+    "total": 39.6,
+  },
+  "11": {
+    "001E": 33.8,
+    "total": 33.8,
+  },
+  "12": {
+    "001E": 41.6,
+    "total": 41.6,
+  },
+  ... # more states here
+}
+```
+
+##### State Districts File
+```python
+# upload_root/series/year/table/state/districts.json
+{
+  "10": {
+    "001E": 35,
+    "total": 35,
+  },
+  "11": {
+    "001E": 55,
+    "total": 55,
+  },
+  "12": {
+    "001E": 46.3,
+    "total": 46.3,
+  },
+  ... # more districts here
+}
+```
+
+##### State County File
+```python
+# upload_root/series/year/table/state/counties.json
+{
+  "12001": { # county FIPS code
+    "001E": 31,
+    "total": 31,
+  },
+  "12003": {
+    "001E": 36.5,
+    "total": 36.5,
+  },
+  "12005": {
+    "001E": 39.7,
+    "total": 39.7,
+  },
+  "12007": {
+    "001E": 41,
+    "total": 41,
+  },
+  ... # more counties here
+}
+```
