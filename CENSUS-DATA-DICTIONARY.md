@@ -5,7 +5,7 @@ This README documents seven possible census demographics using 2016 ACS five-yea
 Census table + variable lookup: https://api.census.gov/data/2016/acs/acs5/variables.html
 - [ ] PA data ... not currently including: https://docs.google.com/spreadsheets/d/1ztOyo95AVogMPltQxkJGsM4o42H7yzxqfIC5AwiFpkk/edit#gid=1739606676
 
-#### Minority share or percent white
+### Minority share or percent white
 - Table: B03002
   - total: 001E
   - white: 003E
